@@ -1,0 +1,61 @@
+#include <Arduino.h>
+#include <driver/ledc.h>
+
+//Definiendo variables y pines para los botones y servo
+const int LEFT = 2; // Número de pin para el botón izquierdo
+const int RIGHT = 5; // Número de pin para el botón derecho
+const int servoChannel = 0; // Canal PWM para el servo
+const int servoPin = 15; // Número del pin al que está conectado el servo
+const int angleStep = 5; // Tamaño de paso para el cambio de ángulo
+int angle = 0; // Ángulo inicial del servo
+
+void setup() {
+  //Establecimiento de los pines de los botones como entradas con resistencias pull-up internas
+  pinMode(LEFT, INPUT_PULLUP);
+  pinMode(RIGHT, INPUT_PULLUP);
+
+  // Configuración del canal PWM para el servo 
+  ledcSetup(servoChannel, 50, 16); // Canal 0, frequencia de 50 Hz, resolución de 16-bit (0-65535)
+  ledcAttachPin(servoPin, servoChannel);
+
+  // Inicialización del servo al ángulo inicial
+  ledcWrite(servoChannel, map(angle, 0, 180, 0, 65535));
+}
+
+void loop() {
+  // mapeado/asignación del ángulo (en grados) a un valor de ciclo de trabajo (0 a 65535) para el servo
+  int servoDutyCycle = map(angle, 0, 180, 0, 65535);
+
+  // Incrementa el ángulo si se presiona el botón izquierdo
+  if (digitalRead(LEFT) == LOW) {
+    if(angle >= 0 && angle <= 180) {
+      angle = angle + angleStep;
+      if (angle > 180) {
+      angle = 180; //Límite del ángulo a 180 grados
+    }
+    else{
+      //Actualización de la posición/ángulo del servo y se agrega un retraso para el anti-rebote del botón
+      servoDutyCycle = map(angle, 0, 180, 0, 65535);
+      ledcWrite(servoChannel, servoDutyCycle);
+      delay(100); 
+    }
+  }
+  }
+
+  // Disminución del ángulo si se presion el botón derecho
+  if (digitalRead(RIGHT) == LOW) {
+    if(angle > 0 && angle <= 180)
+    angle = angle - angleStep;
+    if (angle < 0) {
+      angle = 0; //Límite del ángulo a 0 grados
+    }
+    else{
+    //Actualización de la posición/ángulo del servo y se agrega un retraso para el anti-rebote del botón
+    servoDutyCycle = map(angle, 0, 180, 0, 65535);
+    ledcWrite(servoChannel, servoDutyCycle);
+    delay(100); 
+    }
+  }
+  
+  delay(100); //Esperando a que el servo alcance la posición/ángulo de destino
+}
